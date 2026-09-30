@@ -160,6 +160,15 @@ export async function POST(request: Request) {
   const startedAt = Date.now();
 
   try {
+    if (!process.env.OPENAI_API_KEY) {
+      console.error("OPENAI_API_KEY is not configured.");
+
+      return NextResponse.json(
+        { error: "AI verification is temporarily unavailable." },
+        { status: 503 }
+      );
+    }
+
     const formData = await request.formData();
 
     const image = formData.get("image");
@@ -193,7 +202,35 @@ export async function POST(request: Request) {
       );
     }
 
-    const application = JSON.parse(applicationRaw);
+    let application: {
+      brandName: string;
+      classType: string;
+      alcoholContent: string;
+      netContents: string;
+      producer?: string;
+      countryOfOrigin?: string;
+    };
+
+    try {
+      application = JSON.parse(applicationRaw);
+    } catch {
+      return NextResponse.json(
+        { error: "Application information is invalid." },
+        { status: 400 }
+      );
+    }
+
+    if (
+      !application.brandName?.trim() ||
+      !application.classType?.trim() ||
+      !application.alcoholContent?.trim() ||
+      !application.netContents?.trim()
+    ) {
+      return NextResponse.json(
+        { error: "Required application information is incomplete." },
+        { status: 400 }
+      );
+    }
 
     const bytes = Buffer.from(await image.arrayBuffer());
     const dataUrl = `data:${image.type};base64,${bytes.toString("base64")}`;

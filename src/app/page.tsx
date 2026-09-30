@@ -258,7 +258,8 @@ export default function Home() {
                   onChange={(v) => updateField("producer", v)}
                 />
                 <Field
-                  label="Country of Origin"
+                  label="Country of Origin (Imports)"
+                  hint="Leave blank when country-of-origin verification is not applicable."
                   value={form.countryOfOrigin}
                   onChange={(v) => updateField("countryOfOrigin", v)}
                 />
@@ -749,11 +750,13 @@ function Field({
   value,
   onChange,
   required = false,
+  hint,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   required?: boolean;
+  hint?: string;
 }) {
   return (
     <label className="block">
@@ -766,6 +769,11 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-[15px] outline-none transition focus:border-[#315f91] focus:ring-2 focus:ring-blue-100"
       />
+      {hint && (
+        <span className="mt-1.5 block text-xs leading-5 text-slate-500">
+          {hint}
+        </span>
+      )}
     </label>
   );
 }
