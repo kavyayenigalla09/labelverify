@@ -16,7 +16,8 @@ The review covers:
 - Class / type
 - Alcohol content
 - Net contents
-- Producer information
+- Producer / bottler name and address
+- Required field of vision for brand name, class/type, and alcohol content
 - Country of origin when applicable
 - Government health warning
 - Label image quality
@@ -41,7 +42,7 @@ The application separates AI extraction from comparison logic.
 
 ### AI extraction
 
-The vision model examines uploaded artwork and returns structured observations about visible label content, government warning text, and image quality.
+The vision model examines uploaded artwork and returns structured observations about visible label content, government warning text, image quality, and whether brand name, class/type, and alcohol content appear together in the same field of vision.
 
 ### Deterministic comparison
 
@@ -108,11 +109,11 @@ Run:
 
 Required columns:
 
-    filename,brandName,classType,alcoholContent,netContents
+    filename,brandName,classType,alcoholContent,netContents,producer
 
 Optional columns:
 
-    producer,countryOfOrigin
+    countryOfOrigin
 
 The `filename` value must correspond to one of the uploaded label image filenames.
 
@@ -152,11 +153,17 @@ The OpenAI API key is used only by the server-side API route and is stored as an
 
 For a production government environment, additional work would be required around authentication, authorization, audit logging, approved infrastructure, document retention, PII handling, network controls, monitoring, and applicable security requirements.
 
+## Deployed Application
+
+Production prototype:
+
+    https://labelverify-phi.vercel.app/
+
 ## Assumptions and Scope
 
 This prototype demonstrates the review workflow rather than reproducing the complete COLA regulatory system.
 
-It focuses on common alcohol-label fields described in the project requirements. Alcohol labeling rules vary by beverage category and circumstance, so a production implementation would require a more comprehensive and version-controlled regulatory rules engine.
+The implemented review is centered on common distilled-spirits label requirements and the workflow described in the project brief. It is not intended to represent exhaustive regulatory validation for every distilled-spirits category, wine, or malt beverages. A production implementation would extend the rules engine for beverage-specific and conditional disclosures, typography and placement requirements, regulatory rule versioning, security controls, and COLA integration.
 
 Country of origin is treated as an optional comparison field for situations where it is applicable.
 

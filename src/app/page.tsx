@@ -26,6 +26,10 @@ type VerificationResult = {
     status: CheckStatus;
     reason: string;
   }>;
+  fieldOfVision: {
+    status: CheckStatus;
+    reason: string;
+  };
   warning: {
     present: boolean;
     exactWording: boolean;
@@ -182,6 +186,7 @@ export default function Home() {
     !!form.classType.trim() &&
     !!form.alcoholContent.trim() &&
     !!form.netContents.trim() &&
+    !!form.producer.trim() &&
     !analyzing;
 
   return (
@@ -254,6 +259,7 @@ export default function Home() {
                 </div>
                 <Field
                   label="Bottler / Producer Name & Address"
+                  required
                   value={form.producer}
                   onChange={(v) => updateField("producer", v)}
                 />
@@ -559,6 +565,21 @@ function Results({
               />
             </div>
           )}
+        </div>
+      </div>
+
+      <div className="mt-7 rounded-2xl border border-slate-200/80 bg-white px-6 py-5 shadow-[0_10px_35px_rgba(15,23,42,0.06)]">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div>
+            <p className="font-bold">Required Field of Vision</p>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              Brand name, class/type, and alcohol content should appear together in the same field of vision.
+            </p>
+            <p className="mt-2 text-xs leading-5 text-slate-500">
+              {result.fieldOfVision.reason}
+            </p>
+          </div>
+          <StatusBadge status={result.fieldOfVision.status} />
         </div>
       </div>
 
@@ -923,6 +944,7 @@ function BatchReview() {
         "classType",
         "alcoholContent",
         "netContents",
+        "producer",
       ];
 
       const missing = required.filter((header) => !headers.includes(header));
@@ -1206,8 +1228,8 @@ function BatchReview() {
 
             <div className="mt-4 rounded-lg bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-500">
               Required columns: filename, brandName, classType,
-              alcoholContent, netContents. Producer and countryOfOrigin are
-              optional.
+              alcoholContent, netContents, producer. countryOfOrigin is optional
+              and applies to imports.
             </div>
           </div>
         </div>
@@ -1365,7 +1387,8 @@ function BatchReview() {
                         ).length +
                         item.result.warning.checks.filter(
                           (check) => check.status !== "match"
-                        ).length
+                        ).length +
+                        (item.result.fieldOfVision.status !== "match" ? 1 : 0)
                       : 0;
 
                     return (
@@ -1474,6 +1497,16 @@ function BatchReview() {
             </div>
 
             <div>
+              <h4 className="mb-4 font-bold">Field of Vision & Government Warning</h4>
+              <div className="mb-5 rounded-lg border border-slate-200 p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <p className="font-semibold">Required Field of Vision</p>
+                  <StatusBadge status={selected.result.fieldOfVision.status} />
+                </div>
+                <p className="mt-2 text-xs leading-5 text-slate-500">
+                  {selected.result.fieldOfVision.reason}
+                </p>
+              </div>
               <h4 className="mb-4 font-bold">Government Warning</h4>
               <div className="space-y-3">
                 {selected.result.warning.checks.map((check) => (

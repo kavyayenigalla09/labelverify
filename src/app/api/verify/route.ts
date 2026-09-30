@@ -22,6 +22,11 @@ const LabelAnalysisSchema = z.object({
     governmentWarningText: z.string().nullable(),
   }),
 
+  fieldOfVision: z.object({
+    brandClassAlcoholTogether: z.enum(["yes", "no", "unclear"]),
+    notes: z.string(),
+  }),
+
   warning: z.object({
     present: z.boolean(),
     exactWording: z.boolean(),
@@ -224,7 +229,8 @@ export async function POST(request: Request) {
       !application.brandName?.trim() ||
       !application.classType?.trim() ||
       !application.alcoholContent?.trim() ||
-      !application.netContents?.trim()
+      !application.netContents?.trim() ||
+      !application.producer?.trim()
     ) {
       return NextResponse.json(
         { error: "Required application information is incomplete." },
@@ -257,6 +263,7 @@ IMPORTANT RULES:
 - For alcohol content, extract the visible ABV/Alc./Vol. expression, including proof if visible.
 - For net contents, extract the visible quantity and unit.
 - For producer/bottler and country of origin, return only text actually visible.
+- Determine whether the brand name, class/type designation, and alcohol content are displayed together in the same field of vision (the same label panel/view without turning the container). Return "yes" only when the image clearly supports this, "no" when they are clearly separated across different fields of vision, and "unclear" when image composition, cropping, angle, or multiple photographed panels prevents a confident determination.
 - Inspect the government health warning carefully.
 - Determine whether "GOVERNMENT WARNING:" is visibly uppercase.
 - Determine whether the heading appears visually bold relative to the warning body.
@@ -296,6 +303,10 @@ Return exactly this JSON shape:
     "producer": "string or null",
     "countryOfOrigin": "string or null",
     "governmentWarningText": "string or null"
+  },
+  "fieldOfVision": {
+    "brandClassAlcoholTogether": "yes" | "no" | "unclear",
+    "notes": "string"
   },
   "warning": {
     "present": true | false,
@@ -364,19 +375,17 @@ Return exactly this JSON shape:
       },
     ];
 
-    if (application.producer?.trim()) {
-      checks.push({
-        id: "producer",
-        label: "Bottler / Producer",
-        expected: application.producer,
-        detected: parsed.extracted.producer,
-        ...compareText(
-          application.producer,
-          parsed.extracted.producer,
-          "producer"
-        ),
-      });
-    }
+    checks.push({
+      id: "producer",
+      label: "Bottler / Producer",
+      expected: application.producer,
+      detected: parsed.extracted.producer,
+      ...compareText(
+        application.producer,
+        parsed.extracted.producer,
+        "producer"
+      ),
+    });
 
     if (application.countryOfOrigin?.trim()) {
       checks.push({
@@ -390,6 +399,24 @@ Return exactly this JSON shape:
         ),
       });
     }
+
+    const fieldOfVisionStatus: "match" | "mismatch" | "review" =
+      parsed.fieldOfVision.brandClassAlcoholTogether === "yes"
+        ? "match"
+        : parsed.fieldOfVision.brandClassAlcoholTogether === "no"
+          ? "mismatch"
+          : "review";
+
+    const fieldOfVision = {
+      status: fieldOfVisionStatus,
+      reason:
+        parsed.fieldOfVision.notes ||
+        (fieldOfVisionStatus === "match"
+          ? "Brand name, class/type, and alcohol content appear together."
+          : fieldOfVisionStatus === "mismatch"
+            ? "Required information appears across different fields of vision."
+            : "The field-of-vision requirement could not be verified confidently."),
+    };
 
     const warningChecks = [
       {
@@ -417,6 +444,7 @@ Return exactly this JSON shape:
     const allStatuses = [
       ...checks.map((check) => check.status),
       ...warningChecks.map((check) => check.status),
+      fieldOfVision.status,
     ];
 
     let overallStatus: "pass" | "review" | "fail" = "pass";
@@ -436,6 +464,7 @@ Return exactly this JSON shape:
       imageQuality: parsed.imageQuality,
       imageQualityNotes: parsed.imageQualityNotes,
       checks,
+      fieldOfVision,
       warning: {
         ...parsed.warning,
         checks: warningChecks,
