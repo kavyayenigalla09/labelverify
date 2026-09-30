@@ -185,7 +185,7 @@ export default function Home() {
     !analyzing;
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,_#eef5fb_0,_#f8fafc_34rem)] text-slate-900">
       <Header />
 
       <div className="border-b border-slate-200 bg-white">
@@ -204,12 +204,12 @@ export default function Home() {
       {mode === "batch" ? (
         <BatchReview />
       ) : (
-        <section className="mx-auto max-w-7xl px-6 py-10">
+        <section className="mx-auto max-w-7xl px-5 py-12 sm:px-6">
           <div className="mb-8">
             <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-[#315f91]">
               New Review
             </p>
-            <h2 className="text-3xl font-bold tracking-tight">
+            <h2 className="text-3xl font-bold tracking-[-0.025em] text-slate-950 sm:text-4xl">
               Verify an alcohol beverage label
             </h2>
             <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
@@ -380,7 +380,7 @@ export default function Home() {
             <button
               disabled={!canVerify}
               onClick={verifyLabel}
-              className="min-w-[190px] rounded-lg bg-[#17365d] px-6 py-3.5 text-base font-bold text-white shadow-sm transition hover:bg-[#244d7b] disabled:cursor-not-allowed disabled:bg-slate-300"
+              className="min-w-[190px] rounded-xl bg-[#17365d] px-6 py-3.5 text-base font-bold text-white shadow-[0_7px_18px_rgba(23,54,93,0.18)] transition hover:-translate-y-0.5 hover:bg-[#244d7b] hover:shadow-[0_10px_24px_rgba(23,54,93,0.22)] disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
             >
               {analyzing ? (
                 <span className="flex items-center justify-center gap-2">
@@ -462,6 +462,10 @@ function Results({
   } as const;
 
   const config = statusConfig[result.overallStatus];
+  const [disposition, setDisposition] = useState<
+    "accept" | "follow-up" | "reject" | null
+  >(null);
+  const [agentNote, setAgentNote] = useState("");
 
   return (
     <section id="verification-results" className="scroll-mt-6 pt-10">
@@ -559,7 +563,7 @@ function Results({
       </div>
 
       <div className="mt-7 grid gap-7 lg:grid-cols-2">
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_10px_35px_rgba(15,23,42,0.06)]">
           <div className="border-b border-slate-200 px-6 py-5">
             <h3 className="font-bold">Government Health Warning</h3>
             <p className="mt-1 text-sm text-slate-500">
@@ -597,7 +601,7 @@ function Results({
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_10px_35px_rgba(15,23,42,0.06)]">
           <div className="border-b border-slate-200 px-6 py-5">
             <h3 className="font-bold">Image Quality & Review Notes</h3>
           </div>
@@ -631,7 +635,78 @@ function Results({
         </div>
       </div>
 
-      <div className="mt-7 rounded-xl border border-blue-100 bg-blue-50 px-5 py-4">
+      <div className="mt-7 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_10px_35px_rgba(15,23,42,0.06)]">
+        <div className="border-b border-slate-100 bg-slate-50/60 px-6 py-5">
+          <div className="flex items-start justify-between gap-5">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#315f91]">
+                Human decision
+              </p>
+              <h3 className="mt-1 text-lg font-bold text-slate-950">Agent disposition</h3>
+              <p className="mt-1 text-sm leading-6 text-slate-500">
+                Record the reviewer&apos;s decision after considering the automated findings.
+              </p>
+            </div>
+            <span className="hidden rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-500 sm:inline-flex">
+              Not persisted in prototype
+            </span>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <div className="grid gap-3 sm:grid-cols-3">
+            {[
+              ["accept", "Accept", "No further action"],
+              ["follow-up", "Needs Follow-up", "Clarification required"],
+              ["reject", "Reject", "Issues require correction"],
+            ].map(([value, label, helper]) => {
+              const active = disposition === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() =>
+                    setDisposition(value as "accept" | "follow-up" | "reject")
+                  }
+                  aria-pressed={active}
+                  className={`rounded-xl border px-4 py-4 text-left transition ${
+                    active
+                      ? "border-[#315f91] bg-blue-50 ring-2 ring-blue-100"
+                      : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+                  }`}
+                >
+                  <span className={`block text-sm font-bold ${active ? "text-[#17365d]" : "text-slate-800"}`}>
+                    {active ? "✓ " : ""}{label}
+                  </span>
+                  <span className="mt-1 block text-xs text-slate-500">{helper}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <label className="mt-5 block">
+            <span className="mb-2 block text-sm font-semibold text-slate-700">
+              Reviewer note <span className="font-normal text-slate-400">(optional)</span>
+            </span>
+            <textarea
+              value={agentNote}
+              onChange={(event) => setAgentNote(event.target.value)}
+              rows={3}
+              placeholder="Add rationale or follow-up instructions…"
+              className="w-full resize-y rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm outline-none transition hover:border-slate-400 focus:border-[#315f91] focus:ring-4 focus:ring-blue-100/70"
+            />
+          </label>
+
+          {disposition && (
+            <div className="mt-4 flex items-center gap-2 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#17365d] text-xs font-bold text-white">✓</span>
+              Disposition recorded for this review session.
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-5 rounded-xl border border-blue-100 bg-blue-50/80 px-5 py-4">
         <p className="text-sm font-semibold text-[#17365d]">
           Decision support, not automated approval
         </p>
@@ -668,11 +743,14 @@ function StatusBadge({ status }: { status: CheckStatus }) {
 
 function Header() {
   return (
-    <header className="border-b border-slate-200 bg-white">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
+    <header className="border-b border-slate-200/80 bg-white/90 backdrop-blur">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-6">
         <div className="flex items-center gap-4">
-          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-[#17365d] text-lg font-bold text-white">
-            LV
+          <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-[#17365d] shadow-[0_6px_18px_rgba(23,54,93,0.22)]">
+            <svg viewBox="0 0 24 24" className="h-6 w-6 text-white" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+              <path d="M6 3.75h8.5L18 7.25v13H6z" />
+              <path d="M14.5 3.75v3.5H18M8.8 12.2l2 2 4.5-4.5" />
+            </svg>
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight text-[#17365d]">
@@ -728,8 +806,8 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <div className="border-b border-slate-200 px-7 py-5">
+    <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_10px_35px_rgba(15,23,42,0.06)]">
+      <div className="border-b border-slate-100 bg-slate-50/60 px-7 py-5">
         <div className="flex items-center gap-3">
           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#17365d] text-sm font-bold text-white">
             {number}
@@ -767,7 +845,7 @@ function Field({
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-[15px] outline-none transition focus:border-[#315f91] focus:ring-2 focus:ring-blue-100"
+        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-[15px] shadow-[0_1px_2px_rgba(15,23,42,0.03)] outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-[#315f91] focus:ring-4 focus:ring-blue-100/70"
       />
       {hint && (
         <span className="mt-1.5 block text-xs leading-5 text-slate-500">
@@ -780,7 +858,7 @@ function Field({
 
 function InfoCard({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-5 py-4">
+    <div className="rounded-xl border border-slate-200/80 bg-white px-5 py-5 shadow-[0_4px_18px_rgba(15,23,42,0.04)]">
       <p className="text-sm font-bold">{title}</p>
       <p className="mt-1 text-xs leading-5 text-slate-500">{text}</p>
     </div>
@@ -1061,7 +1139,7 @@ function BatchReview() {
     : 0;
 
   return (
-    <section className="mx-auto max-w-7xl px-6 py-10">
+    <section className="mx-auto max-w-7xl px-5 py-12 sm:px-6">
       <div className="mb-8 flex flex-col justify-between gap-5 md:flex-row md:items-end">
         <div>
           <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-[#315f91]">
@@ -1086,8 +1164,8 @@ function BatchReview() {
       </div>
 
       <div className="grid gap-7 lg:grid-cols-2">
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-7 py-5">
+        <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_10px_35px_rgba(15,23,42,0.06)]">
+          <div className="border-b border-slate-100 bg-slate-50/60 px-7 py-5">
             <div className="flex items-center gap-3">
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#17365d] text-sm font-bold text-white">
                 1
@@ -1134,8 +1212,8 @@ function BatchReview() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-7 py-5">
+        <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_10px_35px_rgba(15,23,42,0.06)]">
+          <div className="border-b border-slate-100 bg-slate-50/60 px-7 py-5">
             <div className="flex items-center gap-3">
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#17365d] text-sm font-bold text-white">
                 2
@@ -1212,7 +1290,7 @@ function BatchReview() {
             disabled={
               running || records.length === 0 || images.length === 0
             }
-            className="min-w-[200px] rounded-lg bg-[#17365d] px-6 py-3.5 text-base font-bold text-white shadow-sm hover:bg-[#244d7b] disabled:cursor-not-allowed disabled:bg-slate-300"
+            className="min-w-[200px] rounded-xl bg-[#17365d] px-6 py-3.5 text-base font-bold text-white shadow-[0_7px_18px_rgba(23,54,93,0.18)] transition hover:-translate-y-0.5 hover:bg-[#244d7b] disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
           >
             {running ? "Processing…" : "Run Batch Review →"}
           </button>
